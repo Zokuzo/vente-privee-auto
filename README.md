@@ -155,11 +155,11 @@ Les données du formulaire sont validées par des fonctions pures dans [`validat
 | Date | Valeurs autorisées uniquement : `2026-05-24` ou `2026-05-25` (liste blanche stricte) |
 | Message | Limité à 500 caractères (attribut HTML + contrôle JS) |
 
-Chaque champ invalide affiche un message d'erreur spécifique et est surligné en rouge — sans révéler d'information système.
+Chaque champ invalide affiche un message d'erreur spécifique et est surligné en rouge sans révéler d'information système.
 
 ### 5. Métadonnées robots
 
-La page déclare `<meta name="robots" content="noindex, nofollow">` pour éviter l'indexation par les moteurs de recherche — cohérent avec le caractère privé et sur invitation de l'événement.
+La page déclare `<meta name="robots" content="noindex, nofollow">` pour éviter l'indexation par les moteurs de recherche, cohérent avec le caractère privé et sur invitation de l'événement.
 
 ---
 
