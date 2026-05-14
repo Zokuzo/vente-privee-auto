@@ -108,6 +108,61 @@ Page d'accueil
 
 ---
 
+## Mesures de cybersécurité
+
+### 1. Protection des secrets — gestion des clés API
+
+Les clés EmailJS ne sont jamais codées en dur dans le code source ni committées dans git.
+
+- **`.env`** stocke les clés localement (gitignorée via `.gitignore`)
+- **`build.js`** génère `config.js` à partir des variables d'environnement au moment du build
+- **`config.js`** est lui aussi gitignorée — il n'existe que dans l'environnement d'exécution
+- Sur Vercel, les clés sont injectées via **Settings → Environment Variables**, jamais dans le code
+- En cas d'exposition accidentelle dans l'historique git : **rotation des clés** dans le dashboard EmailJS (les anciennes clés révoquées deviennent inutilisables, sans avoir à réécrire l'historique)
+
+### 2. Prévention XSS (Cross-Site Scripting)
+
+Toute donnée saisie par l'utilisateur est échappée avant affichage dans le DOM.
+
+- La fonction `escapeHTML()` dans [`validation.js`](validation.js) neutralise les caractères spéciaux HTML (`<`, `>`, `"`, `'`, `&`) avant tout rendu
+- La page de confirmation reconstruit le DOM via `createElement` / `textContent` plutôt que par injection directe dans `innerHTML` avec des données brutes
+- Exemple de vecteur bloqué : saisir `<script>alert(1)</script>` comme prénom affiche le texte littéral, sans exécution
+
+### 3. Content Security Policy (CSP)
+
+Un en-tête CSP est déclaré dans [`index.html`](index.html) via une balise `<meta>` :
+
+```
+default-src 'self'
+script-src 'self' https://cdn.jsdelivr.net
+style-src 'self' 'unsafe-inline' https://fonts.googleapis.com
+font-src https://fonts.gstatic.com
+connect-src https://api.emailjs.com
+img-src 'self' https://mediapool.bmwgroup.com data:
+```
+
+Cette politique restreint les sources autorisées pour les scripts, styles, polices et requêtes réseau. Elle bloque l'injection de scripts depuis des domaines non listés.
+
+### 4. Validation côté client
+
+Les données du formulaire sont validées par des fonctions pures dans [`validation.js`](validation.js) avant toute soumission :
+
+| Champ | Règle appliquée |
+|-------|----------------|
+| Prénom / Nom | Lettres uniquement (avec accents, tirets, apostrophes), 2–50 caractères |
+| Email | Regex RFC-compliant (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`) |
+| Téléphone | Format français : `06 XX XX XX XX`, `+33XXXXXXXXX`, `0033XXXXXXXXX` |
+| Date | Valeurs autorisées uniquement : `2026-05-24` ou `2026-05-25` (liste blanche stricte) |
+| Message | Limité à 500 caractères (attribut HTML + contrôle JS) |
+
+Chaque champ invalide affiche un message d'erreur spécifique et est surligné en rouge — sans révéler d'information système.
+
+### 5. Métadonnées robots
+
+La page déclare `<meta name="robots" content="noindex, nofollow">` pour éviter l'indexation par les moteurs de recherche — cohérent avec le caractère privé et sur invitation de l'événement.
+
+---
+
 ## Qualité des prompts
 
 Les prompts ont été rédigés avec un niveau de précision croissant au fil de la session. Le premier prompt posait un brief complet et structuré : type de page (landing page premium), références visuelles (BMW), liste exhaustive des fonctionnalités attendues (hero, formulaire, confirmation, email, responsive). Cette approche a permis à l'IA de produire une base solide dès la première génération, sans avoir à reformuler les intentions de fond (notamment en utilisant le mode Plan de claude code).
