@@ -1,89 +1,110 @@
 # Vente Privée Automobile — BMW Sélection Privée
 **Examen Technique — Réflexion sur l'utilisation de l'IA**
 
-## Comment procéder sur le site web
-
-### Prérequis — Activer l'envoi d'email (EmailJS)
-
-Avant de tester le site en conditions réelles, configurer EmailJS en 5 minutes :
-
-1. Créer un compte gratuit sur **[emailjs.com](https://www.emailjs.com)**
-2. **Email Services** → Add New Service → Outlook → connecter votre adresse email
-3. **Email Templates** → Create New Template, avec les variables suivantes dans le corps :
-   ```
-   Bonjour {{prenom}} {{nom}},
-   Votre rendez-vous est confirmé.
-   Date : {{date}} · Créneau : {{creneau}} · Modèle : {{modele}}
-   ```
-   → Champ "To Email" : `{{to_email}}`
-4. **Account → API Keys** → copier la Public Key
-5. Ouvrir `index.html` et remplacer les 3 lignes en haut du `<script>` :
-   ```js
-   const EMAILJS_PUBLIC_KEY  = "votre_public_key";
-   const EMAILJS_SERVICE_ID  = "service_xxxxxxx";
-   const EMAILJS_TEMPLATE_ID = "template_xxxxxxx";
-   ```
-
-> Sans cette configuration, le site fonctionne en **mode démo** : le formulaire s'envoie, la page de confirmation s'affiche, mais aucun email n'est transmis.
-
 ---
 
-### Lancer le site en local
+## Structure des fichiers
 
-**Option A — Double-clic** : ouvrir `index.html` directement dans le navigateur.
-
-**Option B — Live Server (VS Code)** : clic droit sur `index.html` → *Open with Live Server* → `http://127.0.0.1:5500`
-
-**Option C — Python** :
-```powershell
-cd "C:\Files\Exam_technique\vente-privee-auto"
-python -m http.server 8080
-# Ouvrir http://localhost:8080
+```
+vente-privee-auto/
+├── index.html          # HTML seul (sans CSS ni JS embarqués)
+├── styles.css          # Tout le CSS
+├── validation.js       # Fonctions pures : escapeHTML, validateEmail, validatePhone…
+├── script.js           # DOM, handlers, soumission formulaire (importe validation.js)
+├── config.js           # Généré par build.js — JAMAIS commité
+├── build.js            # Génère config.js depuis les variables d'environnement
+├── package.json        # Scripts : npm run build, npm test
+├── vercel.json         # Commande de build pour le déploiement Vercel
+├── .env                # Clés EmailJS locales — JAMAIS commité
+├── .env.example        # Template des variables d'environnement
+├── favicon.svg         # Roundel BMW (SVG)
+├── tests/
+│   └── validation.test.js  # Tests Vitest (36 tests)
+└── email-template.html # Template HTML de l'email de confirmation
 ```
 
 ---
 
-### Parcours utilisateur
+## Lancer le site en local
+
+**Prérequis :** Node.js installé.
+
+```powershell
+cd "C:\Files\Exam_technique\vente-privee-auto"
+npm install
+cp .env.example .env         # puis renseigner les clés dans .env
+npm run build                # génère config.js avec vos clés
+```
+
+**Ouvrir le site :**
+- **Option A** — Live Server (VS Code) : clic droit sur `index.html` → *Open with Live Server*
+- **Option B** — Python : `python -m http.server 8080` puis `http://localhost:8080`
+
+> Sans clés EmailJS configurées, le site fonctionne en **mode démo** : le formulaire se soumet, la page de confirmation s'affiche, mais aucun email n'est envoyé.
+
+---
+
+## Tests
+
+```powershell
+npm test
+```
+
+**36 tests** couvrent les fonctions de `validation.js` : `escapeHTML`, `validateEmail`, `validatePhone`, `validateName`, `validateDate`, `validateMessage`, `formatDate`.
+
+---
+
+## Déploiement Vercel
+
+1. Pousser le projet sur GitHub
+2. Connecter le dépôt à [vercel.com](https://vercel.com)
+3. Dans **Settings → Environment Variables**, ajouter :
+   - `EMAILJS_PUBLIC_KEY`
+   - `EMAILJS_SERVICE_ID`
+   - `EMAILJS_TEMPLATE_ID`
+4. Vercel exécute automatiquement `npm install && node build.js` à chaque push (défini dans `vercel.json`)
+
+**Rotation des clés recommandée :** si d'anciennes clés ont été exposées dans l'historique git, créez de nouvelles clés dans le dashboard EmailJS et invalidez les anciennes. Les clés révoquées dans l'historique ne présentent plus de risque.
+
+---
+
+## Template email (`email-template.html`)
+
+Le fichier contient la mise en page HTML de l'email de confirmation. À coller dans le champ **"Email Content"** de votre template EmailJS (mode HTML). Variables remplacées automatiquement : `{{prenom}}`, `{{nom}}`, `{{date}}`, `{{creneau}}`, `{{modele}}`.
+
+---
+
+## Parcours utilisateur
 
 ```
 Page d'accueil
     │
     ▼
 ① Hero section
-   └─ Lire le titre et les informations de l'événement
+   └─ Titre et informations de l'événement
    └─ Cliquer sur "Réserver Mon Créneau Privé" (ou scroller)
     │
     ▼
 ② Section Événement
-   └─ Découvrir les détails : dates, lieu, modèles disponibles
-   └─ Survoler les 4 tuiles véhicules (M3 CS · M5 CS · X5 M · M8 GC)
+   └─ Détails : dates, lieu, modèles disponibles (M3 CS · M5 CS · X5 M · M8 GC)
     │
     ▼
 ③ Formulaire de réservation
-   └─ Remplir : Prénom, Nom, Email, Téléphone
-   └─ Choisir une date (24 ou 25 mai 2026)
-   └─ Choisir un créneau horaire (10h00 → 17h00)
-   └─ Sélectionner un modèle d'intérêt
-   └─ Ajouter un message optionnel
+   └─ Prénom, Nom (lettres uniquement), Email, Téléphone (format FR)
+   └─ Date (24 ou 25 mai 2026), Créneau, Modèle
+   └─ Message optionnel (max 500 caractères)
    └─ Cliquer "Confirmer la Réservation"
     │
-    ├─ [Champ manquant ou email invalide]
-    │   └─ Message d'erreur affiché sous le formulaire
+    ├─ [Champ invalide] → Message d'erreur spécifique + champ surligné en rouge
     │
     └─ [Formulaire valide]
         │
         ▼
 ④ Page de confirmation
-   └─ Récapitulatif du rendez-vous affiché (nom, date, créneau, modèle)
-   └─ Email de confirmation envoyé à l'adresse saisie (si EmailJS configuré)
-   └─ Bouton "Nouvelle réservation" pour recommencer
+   └─ Récapitulatif affiché (données échappées, protection XSS)
+   └─ Email de confirmation envoyé (si EmailJS configuré)
+   └─ Bouton "Nouvelle réservation"
 ```
-
----
-
-### Template email (`email-template.html`)
-
-Le fichier `email-template.html` contient la mise en page HTML de l'email de confirmation. Il est destiné à être copié dans le champ **"Email Content"** de votre template EmailJS (mode HTML). Les variables `{{prenom}}`, `{{nom}}`, `{{date}}`, `{{creneau}}`, `{{modele}}` sont automatiquement remplacées lors de l'envoi.
 
 ---
 
@@ -139,16 +160,17 @@ Le déploiement sur Vercel via GitHub n'a pas été traité comme un détail fin
 
 | Composant | Technologie |
 |-----------|-------------|
-| Page web | HTML5 / CSS3 / JavaScript vanilla |
+| Page web | HTML5 / CSS3 / JavaScript (ES Modules) |
 | Polices | Google Fonts (Cormorant Garamond + Jost) |
 | Email | EmailJS (envoi client-side, sans backend) |
 | Images | BMW Press Club — mediapool.bmwgroup.com |
 | Hébergement | Vercel (déploiement continu via GitHub) |
 | Versionning | Git / GitHub |
+| Tests | Vitest (36 tests unitaires) |
 
 ---
 
-## Plugin Claude Code 
+## Plugin Claude Code
 
 | Plugin |
 |------------|
@@ -157,5 +179,3 @@ Le déploiement sur Vercel via GitHub n'a pas été traité comme un détail fin
 | frontend-design |
 | playwright |
 | superpowers |
-
-

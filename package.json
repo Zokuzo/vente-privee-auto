@@ -1,0 +1,14 @@
+{
+  "name": "vente-privee-auto",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "dotenv": "^16.0.0",
+    "vitest": "^1.0.0"
+  }
+}
