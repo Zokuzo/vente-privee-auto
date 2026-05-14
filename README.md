@@ -3,46 +3,6 @@
 
 ## Comment procéder sur le site web
 
-### Prérequis — Activer l'envoi d'email (EmailJS)
-
-Avant de tester le site en conditions réelles, configurer EmailJS en 5 minutes :
-
-1. Créer un compte gratuit sur **[emailjs.com](https://www.emailjs.com)**
-2. **Email Services** → Add New Service → Outlook → connecter votre adresse email
-3. **Email Templates** → Create New Template, avec les variables suivantes dans le corps :
-   ```
-   Bonjour {{prenom}} {{nom}},
-   Votre rendez-vous est confirmé.
-   Date : {{date}} · Créneau : {{creneau}} · Modèle : {{modele}}
-   ```
-   → Champ "To Email" : `{{to_email}}`
-4. **Account → API Keys** → copier la Public Key
-5. Ouvrir `index.html` et remplacer les 3 lignes en haut du `<script>` :
-   ```js
-   const EMAILJS_PUBLIC_KEY  = "votre_public_key";
-   const EMAILJS_SERVICE_ID  = "service_xxxxxxx";
-   const EMAILJS_TEMPLATE_ID = "template_xxxxxxx";
-   ```
-
-> Sans cette configuration, le site fonctionne en **mode démo** : le formulaire s'envoie, la page de confirmation s'affiche, mais aucun email n'est transmis.
-
----
-
-### Lancer le site en local
-
-**Option A — Double-clic** : ouvrir `index.html` directement dans le navigateur.
-
-**Option B — Live Server (VS Code)** : clic droit sur `index.html` → *Open with Live Server* → `http://127.0.0.1:5500`
-
-**Option C — Python** :
-```powershell
-cd "C:\Files\Exam_technique\vente-privee-auto"
-python -m http.server 8080
-# Ouvrir http://localhost:8080
-```
-
----
-
 ### Parcours utilisateur
 
 ```
@@ -78,14 +38,6 @@ Page d'accueil
    └─ Email de confirmation envoyé à l'adresse saisie (si EmailJS configuré)
    └─ Bouton "Nouvelle réservation" pour recommencer
 ```
-
----
-
-### Template email (`email-template.html`)
-
-Le fichier `email-template.html` contient la mise en page HTML de l'email de confirmation. Il est destiné à être copié dans le champ **"Email Content"** de votre template EmailJS (mode HTML). Les variables `{{prenom}}`, `{{nom}}`, `{{date}}`, `{{creneau}}`, `{{modele}}` sont automatiquement remplacées lors de l'envoi.
-
----
 
 ## Qualité des prompts
 
